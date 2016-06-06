@@ -34,10 +34,10 @@
 # Example:
 #   >>> title = 'mytitle'
 #   >>> texts = ['block of text 1', '==title foo== \n block of text 2', 'صفحة 23 \n block of text 3']
-#   >>> parser = wp.WikiParser(texts, title)
+#   >>> parser = WikiParser(texts, title)
 #   >>> parser.parse()
-#   [{'section': None, 'text': 'block of text 1'},
-#    {'section': 'title foo', 'text': 'block of text 2 PAGE23EGAP block of text 3'}]
+#   [{'section': None, 'text': ['block of text 1']},
+#    {'section': 'title foo', 'text': ['block of text 2', 'PAGE23EGAP', 'block of text 3']}]
 #
 ######################################################################################################
 
@@ -290,7 +290,7 @@ class WikiParser:
 
         Returns:
             list: Filtered and formatted data, format:
-                [ { "section" : str|None, "text" : str }, ... ]
+                [ { "section" : str|None, "text" : [str, ...] }, ... ]
 
         """
         # split lines in groups and add page number : [(i,[str, str]), (i,[...]), ...]
@@ -315,6 +315,6 @@ class WikiParser:
         gr_titles = [(k,list(g)) for k,g in it.groupby(lines, WikiParser._title_pattern.match)]
         
         return [{'section': title,
-                 'text'   : ' '.join(t if t else '\n' for t in util.striplines(txts))}
+                 'text'   : list(util.striplines(txts))}
                  for title, txts in self._join_titletext(gr_titles)]
 
