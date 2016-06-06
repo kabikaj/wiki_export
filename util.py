@@ -7,9 +7,17 @@
 #############################################################
 
 import sys
+import os
 import re
 import itertools as it
 import operator as op
+from configparser import ConfigParser
+
+CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
+
+config = ConfigParser(inline_comment_prefixes=('#'))
+config.read(os.path.join(CURRENT_PATH, 'config.ini'))
+
 
 def striplines(lines):
     """ Removes empty strings only at the beginning and the end of a list of strings.
@@ -66,17 +74,31 @@ def tochar(*args):
     """
     return tuple(chr(int(s, 16)) for s in args)
 
-def isArabicalpha(c):
+def isArabicalpha(c, ignore_dir=True, ignore_tatweel=True):
     """ Tells if a character is inside the Arabic alphabetic range.
 
     Arabic range is considered from U+0621 (hamza) until U+0652 (sukun).
 
     Args:
         c (str): Character to check.
+        ignore_dir (bool): Include RTL and LTR directionality marks as valid Arabic characters.
+        ignore_tatweel (bool): Include tatweel as a valid Arabic character.
 
     Returns:
         bool: True if the character is inside the Arabic alphabetic tange,
             False otherwise.
 
     """
-    return ord(c)>=ord('ء') and ord(c)<=ord('ْ')
+    # char is in Arabic range
+    if ord(c)>=ord('ء') and ord(c)<=ord('ْ'):
+
+        if ignore_dir:
+            if c == tochar(config.get('unicode', 'ltr'))[0] or \
+               c == tochar(config.get('unicode', 'rtl'))[0]:
+                return True
+
+        if ignore_tatweel:
+            if c == tochar(config.get('unicode', 'tatweel'))[0]:
+                return True
+
+    return False

@@ -246,7 +246,7 @@ class TSVConverter:
                 for token in tokens:
 
                     #
-                    # check possible typos in token
+                    # check possible typos in Arabic token
                     #
 
                     if not re.match(r'%s' % TSVConverter._page_pattern, token):
@@ -263,8 +263,9 @@ class TSVConverter:
                                    % (section, self.title, token), file=sys.stderr)
 
                         # if ta marbuta (U+0629) in the middle
-                        if len(token)>2:
-                            if 'ة' in token[1:-1]:
+                        # it has to be last character or one after last, if word include vowels of case
+                        if len(token)>4:
+                            if 'ة' in token[1:-3]:
                                 print('Warning in section "%s" of scan %s: word "%s" may contain a typo.'
                                      % (section, self.title, token), file=sys.stderr)                          
 
