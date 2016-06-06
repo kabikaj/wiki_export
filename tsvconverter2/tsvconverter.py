@@ -254,19 +254,19 @@ class TSVConverter:
                         # word with non arabic char in an arabic alphabetic word
                         if any(util.isArabicalpha(c) for c in token) and \
                            any(not util.isArabicalpha(c) for c in token):
-                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo.'
+                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo (non-Arabic chars inside word)'
                                    % (section, self.title, token), file=sys.stderr)
                         
                         # exceeds max length
                         if len(token) > TSVConverter._MAX_LEN_WORD:
-                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo.'
+                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo (word too long)'
                                    % (section, self.title, token), file=sys.stderr)
 
                         # if ta marbuta (U+0629) in the middle
                         # it has to be last character or one after last, if word include vowels of case
                         if len(token)>4:
                             if 'ة' in token[1:-3]:
-                                print('Warning in section "%s" of scan %s: word "%s" may contain a typo.'
+                                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (ta marbuta in the middle)'
                                      % (section, self.title, token), file=sys.stderr)                          
 
                     
