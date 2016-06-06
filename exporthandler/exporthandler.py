@@ -21,7 +21,9 @@
 # Json Output:
 #     [ { "title" : str ,
 #         "content" : [ { "section" : str|null,
-#                         "text"    : str 
+#                         "text"    : [ str,
+#                                       ...
+#                                     ]
 #                       }, ...
 #                     ]
 #       }, ...
@@ -290,8 +292,15 @@ class ExportHandler:
             >>> e = ExportHandler()
             >>> e.export("Attaiyin.djvu")
             ('[ { "title"   : "Attaiyin.djvu",'
-             '    "content" : [ { "section" : "الحديث الرابع",'
-             '                    "text"    : "PAGE٥٤EGAP عن أبي عبدالرحمن ... "'
+             '    "content" : [
+             '                  { "section" : null,'
+             '                    "text"    : ["PAGE٨٣EGAP"],'
+             '                  },'
+             '                  { "section" : "الحديث الرابع",'
+             '                    "text"    : ["عن أبي عبدالرحمن عبدالله بن مسعود رضي الله عنه قال: حدثنا",
+             '                                 "رسول ...",'
+             '                                 ...'
+             '                                ]' 
              '                  },'
              '                  ...'
              '                 ]'
