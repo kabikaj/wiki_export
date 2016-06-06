@@ -105,9 +105,9 @@ class WikiParser:
 
         """
         if not rawtexts:
-            raise ValueError('Error in WikiParser constructor: rawtext is None or empty.')
+            raise ValueError('Error in WikiParser constructor: rawtext is None or empty')
         if not title:
-            raise ValueError('Error in WikiParser constructor: title is None or empty.')
+            raise ValueError('Error in WikiParser constructor: title is None or empty')
 
         self.rawtexts = rawtexts
         self.title = title
@@ -197,7 +197,7 @@ class WikiParser:
 
                 # remove BOM
                 if WikiParser._UNICODE_CHARS['bom'] in li:
-                    print('Modification in page %d of scan %s: BOM character found and removed.' % (i, self.title), file=sys.stderr)
+                    print('Modification in page %d of scan %s: BOM character found and removed' % (i, self.title), file=sys.stderr)
                     li = li.replace(WikiParser._UNICODE_CHARS['bom'], '')
 
                 #DEPREPATED it's not only used for justification, it is also used as a punctuation mark
@@ -216,19 +216,19 @@ class WikiParser:
                 # normalise quotation marks
                 li_modif = re.sub('[%s]' % ''.join(WikiParser._QUOTATION_MARKS), '"', li)
                 if li_modif != li:
-                    print('Modification in page %d of scan %s: All Quotation marks except "«»" normalised to (").'
+                    print('Modification in page %d of scan %s: All Quotation marks except "«»" normalised to (")'
                            % (i, self.title), file=sys.stderr)
                     li = li_modif
 
-                # split waw from quoted word, eg: (و"المصدوق) into (و "المصدوق)
-                # so that tokenization process works well
-                if ' و"' in li:
+                # split waw from quoted word, eg: (و"المصدوق) into (و "المصدوق), so that tokenization process works well
+                li_modif = re.sub(r'\bو"', 'و "', li)
+                if li_modif != li:
                     print('Modification in page %d of scan %s: waw separated from quoted word.' % (i, self.title), file=sys.stderr)
-                    li = li.replace(' و"', 'و "')
+                    li = li_modif                    
+
+                #possible_dots = re.findall(r'\b([^٠-٩ ]+?٠)\b', li) #DEPRECATED
 
                 # warning arabic zero
-                #DEPRECATED
-                #possible_dots = re.findall(r'\b([^٠-٩ ]+?٠)\b', li)
                 if '٠' in li:
                     print('Warning in page %d of scan %s: Arabic zero "٠" may be in position of a dot "."'
                           % (i, self.title), file=sys.stderr) 
