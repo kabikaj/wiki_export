@@ -8,8 +8,8 @@
 #
 # Json Input:
 #     [ { "title" : str ,
-#         "content" : [ { "section" : str|null,  # name of section
-#                         "text"    : str        # body of text
+#         "content" : [ { "section" : str|null,       # name of section
+#                         "text"    : [str, str, ...] # body of text
 #                       }, ...
 #                     ]
 #       }, ...
@@ -53,7 +53,7 @@
 # TODO:
 #   * check \n !!
 #   * generate layer files?? NO, but explain the creation of layers in webanno in the readme
-#   * put a 0 when there is no info for a tag
+#   * put a 0 when there is no info for a tag !! test this case
 #                                                                            
 ###############################################################################
 
@@ -127,7 +127,7 @@ class TSVConverter:
         Instance attributes:
             title (): Name of the document.
             content (list): chunks of text from the document separated by sections.
-                Format: [{"section" : str|null, "text" : str}, ...]
+                Format: [{"section" : str|null, "text" : [str, ...]}, ...]
                 Page delimiters are inserted within the text.
 
         """
@@ -171,6 +171,33 @@ class TSVConverter:
 
         return json.loads(out.decode('utf8'))
 
+    def _error_checker(self, token, section):
+        """ Check if there are possible typos in token and show warnings.
+
+        Args:
+            token (str): Word to check.
+            section (str): Name of the section the token belongs to.
+
+        """
+        if not re.match(r'%s' % TSVConverter._page_pattern, token):
+        
+            # word with non arabic char in an arabic alphabetic word
+            if any(util.isArabicalpha(c) for c in token) and \
+                any(not util.isArabicalpha(c) for c in token):
+                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (non-Arabic chars inside word)'
+                       % (section, self.title, token), file=sys.stderr)
+        
+            # exceeds max length
+            if len(token) > TSVConverter._MAX_LEN_WORD:
+                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (word too long)'
+                       % (section, self.title, token), file=sys.stderr)
+        
+            # if ta marbuta (U+0629) in the middle
+            # it has to be last character or one after last, if word include vowels of case
+            if len(token)>4:
+                if 'ة' in token[1:-3]:
+                    print('Warning in section "%s" of scan %s: word "%s" may contain a typo (ta marbuta in the middle)'
+                         % (section, self.title, token), file=sys.stderr)  
                  
     def convert(self):
         """ Parse json with section, page and text info and dumps all in tsv format.
@@ -183,9 +210,9 @@ class TSVConverter:
             ValueError: If page info is not parsed correctly.
 
         Example:
-            >>> input = {"title": "Nabrawi.djvu", "content": [{"section": "section 1", "text": \
-            ... "PAGE٥٤EGAP \n الطائعين بغير الايمان"}, {"section": "section 2", "text": \
-            ... "نااش حخن شحخسي ش حرة ودقيق PAGE٥٥EGAP ة ومتكاملة ومتنوعة ومحايدة، PAGE٤٤EGAP يستطيع الجميع المساهمة في"}]}
+            >>> input = {"title": "Nabrawi.djvu", "content": [{"section": None, "text": \
+            ... ["PAGE٥٤EGAP", "", "الطائعين بغير الايمان"]}, {"section": "section 1", "text": \
+            ... ["نااش حخن شحخسي ش حرة ودقيق PAGE٥٥EGAP ة ومتكاملة ومتنوعة ومحايدة، PAGE٤٤EGAP يستطيع الجميع المساهمة في"]}]}
             >>> tsv = TSVConverter(json.dumps(input))
             >>> tsvout = tsv.convert()
             >>> for t in tsvout.splitlines(): print(t)
@@ -209,7 +236,7 @@ class TSVConverter:
         out = []
         cnt_sentence = 0
 
-        pageinfo = sectioninfo = ''
+        pageinfo = sectioninfo = '0' #DEBUG not sure it's suppose to be a zero or an empty string
         newpage = False
 
         for chunk in self.content:
@@ -217,92 +244,78 @@ class TSVConverter:
             newsection = True
             
             section = chunk['section']
-            text = chunk['text']
+            
+            for text in chunk['text']:
 
-            if section:
-                sectioninfo = 'B-%s' % section
+                # DEBUG check if it's working!!
+                if not text:
+                    cnt_sentence+=1
+                    out.append('\n#id=%d' % cnt_sentence)
+                    out.append('#text=')
+                    continue
 
-            try:
-                tokenized = self._tokenizerWrapper(text)
-            except Exception:
-                raise
+                if section:
+                    sectioninfo = 'B-%s' % section
 
-            for item in tokenized:
-                cnt_sentence+=1
+                try:
+                    tokenized = self._tokenizerWrapper(text)
+                except Exception:
+                    raise
+
+                for item in tokenized:
+                    cnt_sentence+=1
                 
-                sentence = item['sentence'] # str
-                tokens = item['tokens'] # list of strings
+                    sentence = item['sentence'] # str
+                    tokens = item['tokens'] # list of strings
 
-                cleantxt = re.sub(r'%s' % TSVConverter._page_pattern, '', sentence)
+                    cleantxt = re.sub(r'%s' % TSVConverter._page_pattern, '', sentence)
 
-                if TSVConverter._pagekw_out_open in cleantxt:
-                    raise ValueError('Bad format for page info in scan "%s" '
+                    if TSVConverter._pagekw_out_open in cleantxt:
+                        raise ValueError('Bad format for page info in scan "%s" '
                                      'Call the administrator.' % self.title)
 
-                out.append('\n#id=%d' % cnt_sentence)
-                out.append('#text=%s' % cleantxt)
+                    out.append('\n#id=%d' % cnt_sentence)
+                    out.append('#text=%s' % cleantxt)
                 
-                cnt_token = 0
-                for token in tokens:
+                    cnt_token = 0
+                    for token in tokens:
 
-                    #
-                    # check possible typos in Arabic token
-                    #
-
-                    if not re.match(r'%s' % TSVConverter._page_pattern, token):
-
-                        # word with non arabic char in an arabic alphabetic word
-                        if any(util.isArabicalpha(c) for c in token) and \
-                           any(not util.isArabicalpha(c) for c in token):
-                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo (non-Arabic chars inside word)'
-                                   % (section, self.title, token), file=sys.stderr)
-                        
-                        # exceeds max length
-                        if len(token) > TSVConverter._MAX_LEN_WORD:
-                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo (word too long)'
-                                   % (section, self.title, token), file=sys.stderr)
-
-                        # if ta marbuta (U+0629) in the middle
-                        # it has to be last character or one after last, if word include vowels of case
-                        if len(token)>4:
-                            if 'ة' in token[1:-3]:
-                                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (ta marbuta in the middle)'
-                                     % (section, self.title, token), file=sys.stderr)                          
-
+                        # check for typos in token
+                        self._error_checker(token, section)
                     
-                    # new page found, start B tag
-                    if TSVConverter._pagekw_out_open in token:
+                        # new page found, start B tag
+                        if TSVConverter._pagekw_out_open in token:
 
-                        pagefound = re.match('^%s$' % TSVConverter._page_pattern, token)
+                            pagefound = re.match('^%s$' % TSVConverter._page_pattern, token)
 
-                        if not pagefound:
-                            raise ValueError('Page information not well formated in scan "%s".' % self.title)
+                            if not pagefound:
+                                raise ValueError('Page information not well formated in scan "%s".' % self.title)
 
-                        if len(pagefound.groups()) != 1:
-                            raise ValueError('Page information not well formated in scan "%s".' % self.title)
+                            if len(pagefound.groups()) != 1:
+                                raise ValueError('Page information not well formated in scan "%s".' % self.title)
 
-                        pageinfo = 'B-%s' % pagefound.groups(0)
-                        newpage = True
+                            pageinfo = 'B-%s' % pagefound.groups(0)
+                            newpage = True
 
-                        continue
+                            continue
 
-                    # do not count a new token if page info is found                        
-                    else:
-                        cnt_token += 1
+                        # do not count a new token if page info is found                        
+                        else:
+                            cnt_token += 1
 
-                    if sectioninfo and not newsection:
-                        sectioninfo = 'I-%s' % section
+                        if sectioninfo and not newsection:
+                            sectioninfo = 'I-%s' % section
 
-                    if pageinfo and not newpage:
-                        pageinfo = 'I' + pageinfo[1:]
+                        if pageinfo and not newpage:
+                            pageinfo = 'I' + pageinfo[1:]
                     
-                    newpage = False
-                    newsection = False
+                        newpage = False
+                        newsection = False
 
-                    entry = '%d-%d\t%s\t%s\t%s' % (cnt_sentence, cnt_token, token,
-                                                   sectioninfo, pageinfo)
+                        entry = '%d-%d\t%s\t%s\t%s' % (cnt_sentence, cnt_token, token,
+                                                       sectioninfo, pageinfo)
                         
-                    out.append(re.sub('\t+', '\t', entry))
+                        out.append(re.sub('\t+', '\t', entry))
 
         header = ''
         
