@@ -39,6 +39,10 @@
 #   [{'section': None, 'text': 'block of text 1'},
 #    {'section': 'title foo', 'text': 'block of text 2 PAGE23EGAP block of text 3'}]
 #
+# TODO
+# ----
+# * put checking of vowels in tsvconverter ??
+#
 ######################################################################################################
 
 import os
@@ -89,6 +93,9 @@ class WikiParser:
     _title_strip = config.get('wiki format', 'char to strip')
                           
     _UNICODE_CHARS = dict((k,util.tochar(v)[0]) for k,v in config['unicode'].items())
+    _ARABIC_VOWELS = list(util.tochar(d)[0] for d in config['arabic vocalic diacritics'].values())
+    _VOWELS_ERROR = re.compile(r'[%s]{2,}' % ''.join(_ARABIC_VOWELS))
+
     _QUOTATION_MARKS = tuple(config['quotation marks'].values())
     _PUNCT_PAIRS = dict(util.tochar(*x) for x in config['punctuation delimiters pairs'].items())
     _PUNCT_EQUAL = list(config['punctuation delimiters equal'].values())
@@ -151,7 +158,8 @@ class WikiParser:
             i+=1
 
     def _cleaner(self, groups):
-        """ Parse all lines of transcriptions, check for errors and sanitize texts.
+        """ Parse all lines of transcriptions, check for errors and warnings,
+            and sanitize texts.
 
         Args:
             groups (list): Lines grouped by wiki pages. Structure:
@@ -228,10 +236,15 @@ class WikiParser:
 
                 #possible_dots = re.findall(r'\b([^٠-٩ ]+?٠)\b', li) #DEPRECATED
 
-                # warning arabic zero
+                # arabic zero may be in place of a dot
                 if '٠' in li:
                     print('Warning in page %d of scan %s: Arabic zero "٠" may be in position of a dot "."'
                           % (i, self.title), file=sys.stderr) 
+
+                # there cannot be more than one vocalic diacritic together
+                if WikiParser._VOWELS_ERROR.search(li):
+                    print('Warning in page %d of scan %s: There are 2 or more vocalic diacritics together'
+                          % (i, self.title), file=sys.stderr)                     
                 
                 # normalise spaces and add line to output
                 aux.append(re.sub(r'[\t ]+', ' ', li))
