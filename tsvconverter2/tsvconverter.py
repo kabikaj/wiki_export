@@ -247,9 +247,11 @@ class TSVConverter:
             
             for text in chunk['text']:
 
+                print('text = ', text, file=sys.stderr) #DEBUG
+
                 # DEBUG check if it's working!!
                 if not text:
-                    cnt_sentence+=1
+                    cnt_sentence += 1
                     out.append('\n#id=%d' % cnt_sentence)
                     out.append('#text=')
                     continue
