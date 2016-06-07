@@ -116,6 +116,8 @@ class TSVConverter:
 
     _MAX_LEN_WORD = config.getint('arabic words', 'max length')
 
+    _ARABIC_VOWELS = list(util.tochar(d)[0] for d in config['arabic vocalic diacritics'].values())
+    _VOWELS_ERROR = re.compile(r'[%s]{2,}' % ''.join(_ARABIC_VOWELS))
 
     def __init__(self, data):
         """ Constructor.
@@ -171,7 +173,43 @@ class TSVConverter:
 
         return json.loads(out.decode('utf8'))
 
-                 
+
+    def _error_checker(self, token, section):
+        """ Check if there are possible typos in token and show warnings.
+
+        Args:
+            token (str): Word to check.
+            section (str): Name of the section the token belongs to.
+
+        """
+        if not re.match(r'%s' % TSVConverter._page_pattern, token):
+        
+            # word with non arabic char in an arabic alphabetic word
+            if any(util.isArabicalpha(c) for c in token) and \
+                any(not util.isArabicalpha(c) for c in token):
+                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (non-Arabic chars inside word)'
+                       % (section, self.title, token), file=sys.stderr)
+        
+            # exceeds max length
+            if len(token) > TSVConverter._MAX_LEN_WORD:
+                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (word too long)'
+                       % (section, self.title, token), file=sys.stderr)
+        
+            # if ta marbuta (U+0629) in the middle
+            # it has to be last character or one after last, if word include vowels of case
+            if len(token)>4:
+                if 'ة' in token[1:-3]:
+                    print('Warning in section "%s" of scan %s: word "%s" may contain a typo (ta marbuta in the middle)'
+                         % (section, self.title, token), file=sys.stderr)  
+
+
+            # there cannot be more than one vocalic diacritic together
+            if TSVConverter._VOWELS_ERROR.search(token):
+                print('Warning in section "%s" of scan %s: There are 2 or more vocalic diacritics together in token "%s"'
+                       % (section, self.title, token), file=sys.stderr)
+
+
+      
     def convert(self):
         """ Parse json with section, page and text info and dumps all in tsv format.
 
@@ -245,30 +283,8 @@ class TSVConverter:
                 cnt_token = 0
                 for token in tokens:
 
-                    #
-                    # check possible typos in Arabic token
-                    #
-
-                    if not re.match(r'%s' % TSVConverter._page_pattern, token):
-
-                        # word with non arabic char in an arabic alphabetic word
-                        if any(util.isArabicalpha(c) for c in token) and \
-                           any(not util.isArabicalpha(c) for c in token):
-                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo (non-Arabic chars inside word)'
-                                   % (section, self.title, token), file=sys.stderr)
-                        
-                        # exceeds max length
-                        if len(token) > TSVConverter._MAX_LEN_WORD:
-                            print('Warning in section "%s" of scan %s: word "%s" may contain a typo (word too long)'
-                                   % (section, self.title, token), file=sys.stderr)
-
-                        # if ta marbuta (U+0629) in the middle
-                        # it has to be last character or one after last, if word include vowels of case
-                        if len(token)>4:
-                            if 'ة' in token[1:-3]:
-                                print('Warning in section "%s" of scan %s: word "%s" may contain a typo (ta marbuta in the middle)'
-                                     % (section, self.title, token), file=sys.stderr)                          
-
+                    # check for typos in token
+                    self._error_checker(token, section)
                     
                     # new page found, start B tag
                     if TSVConverter._pagekw_out_open in token:
