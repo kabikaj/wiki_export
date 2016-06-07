@@ -2,7 +2,7 @@
 #
 #     util.py
 #
-# Utility functions
+# Utility functions  
 #
 #############################################################
 
