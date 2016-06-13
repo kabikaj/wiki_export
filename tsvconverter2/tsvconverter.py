@@ -1,6 +1,6 @@
 #!/usr/bin/python3.4
 #
-#     tsvconverter.py
+#     tsvconverter.py  @DEPRECATED
 #
 # Converts annotated text stored in json into tsv format 2.
 #

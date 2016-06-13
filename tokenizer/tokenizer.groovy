@@ -2,7 +2,7 @@
 
 /***********************************************************************
  *
- *     tokenizer.groovy
+ *     tokenizer.groovy  @DEPRECATED
  *
  * Tokenize and segment text received from stdin and yield it to stdout.
  * Tokenization is performed using the java class BreakIterator.
