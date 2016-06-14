@@ -87,7 +87,7 @@ class TSVConverter:
     """Converts json into tsv.
     
     Class attributes:
-        _page_pattern (_sre.SRE_Pattern): Allowed format of page info.
+        _page_allowed (str): Pattern of page info within input text.
         _pagekw_out_open (str): Opening keyword for indicating page info within the text.
         _pagekw_out_close (str): Closing keyword for indicating page info within the text.
 
@@ -96,12 +96,12 @@ class TSVConverter:
         _page_label (str): Name of page custom layer in webanno.
         _page_feature (str): Name of feature of page custom layer in webanno.
         
-        _page_pattern (str): Pattern of page info within input text.
+        _page_pattern (_sre.SRE_Pattern): Allowed format of page info.
 
         _MAX_LEN_WORD (int): Maximum number of characters an Arabic word is expected to have.
     
     """
-    _page_pattern = config.get('json format', 'page allowed')
+    _page_allowed = config.get('json format', 'page allowed')
     _pagekw_out_open = config.get('json format', 'opening page keyword output')
     _pagekw_out_close = config.get('json format', 'closing page keyword output')
                       

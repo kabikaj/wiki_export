@@ -7,6 +7,7 @@
 # dependencies:
 #   * exporthandler.py
 #   * wikiparser.py
+#   * offsetsbuilder.py
 #   * util.py
 #   * config.ini
 #                                +------------------+        +---------------+
@@ -15,13 +16,13 @@
 #   |                 | <------- |                  | <----- |               |
 #   |                 |   json   +------------------+  json  +---------------+
 #   | wiki_to_json.py |          
-#   |                 |          
-#   |                 | -------> json output files
-#   |                 |  json    
-#   +-----------------+          
-#                                         
+#   |                 |          +-------------------+
+#   |                 | -------> |                   |
+#   |                 |  json    | offsetsbuilder.py | ----> json output files
+#   +-----------------+          |                   |
+#                                +-------------------+        
 # usage:
-#   $ python wiki_to_json.py
+#   $ python wiki_to_json.py --title Example_for_DjVu_manual_cz-book_color.djvu
 #
 #######################################################################################
 
@@ -37,6 +38,7 @@ CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, CURRENT_PATH)
 
 from exporthandler.exporthandler import ExportHandler
+from offsetsbuilder.offsetsbuilder import OffsetsBuilder
 
 config = ConfigParser(inline_comment_prefixes=('#'))
 config.read(os.path.join(CURRENT_PATH, 'config.ini'))
@@ -63,4 +65,6 @@ if __name__ == '__main__':
         fname, fext = os.path.splitext(scan['title'])
 
         with open(os.path.join(OUTPATH, fname+'.json'), 'w') as fp:
-            json.dump(scan['content'], fp)
+            offbr = OffsetsBuilder(json.dumps(scan['content']))
+            out = offbr.build()
+            fp.write(out)
