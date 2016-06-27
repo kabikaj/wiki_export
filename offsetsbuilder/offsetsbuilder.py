@@ -17,6 +17,7 @@
 #   | pages: list                       |       #   ﺎﺤﻔﻇ ﺎﻟﺮﻣﺯ ﻱﺍ ﻚﺒﻴﻜﺟ
 #   |...................................|      #
 #   | _calculate()                      |
+#   | _adjust_borders()                 |
 #   | build(): str                      |      
 #   +-----------------------------------+      
 #                                              
@@ -107,7 +108,7 @@ class OffsetsBuilder:
         into annotation offsets.
 
         """
-        pivot = 0  # index of first char of current chunk of text
+        pivot = 0  # absolute index of first char of current chunk of text
         page_start_abs = -1
         current_page_info = None
         remove_gaps = 0
@@ -122,7 +123,7 @@ class OffsetsBuilder:
                 pagekw_start, pagekw_end = m.span()
 
                 if page_start_abs != -1:
-                    my_last_end = pivot + pagekw_start - remove_gaps
+                    my_last_end = pivot + pagekw_start - remove_gaps - 1
                     self.pages.append({
                         'name' : current_page_info,
                         'start' : page_start_abs,
@@ -140,20 +141,37 @@ class OffsetsBuilder:
 
             if chunk['section']:
 
-                self.alltext += '\n'
+                self.alltext += '\n' # add newline at the end of each section
                 
                 self.sections.append({
                     'name' : chunk['section'],
                     'start' : pivot,
-                    'end' : len(self.alltext)})
+                    'end' : len(self.alltext)-1})
 
             pivot = len(self.alltext)
 
         if page_start_abs != -1:
             self.pages.append({
                 'name' : page_info,
-                'start' : my_last_end,
-                'end' : pivot})            
+                'start' : my_last_end + 1,
+                'end' : pivot - 1})
+
+    def _adjust_borders(self):
+        """ Move index borders that point to newlines to non-newline char.
+
+            Start ofsset is set forward and end offset is put back.
+
+        """
+        for annotation in (self.sections, self.pages):
+
+            for entry in annotation:
+
+                while self.alltext[entry['start']] == '\n':
+                    entry['start'] += 1
+
+                while self.alltext[entry['end']] == '\n':
+                    entry['end'] -= 1
+        
     
     def build(self):
         """ Perform offset calculations and build and merges the text.
@@ -166,8 +184,9 @@ class OffsetsBuilder:
 
         """
         self._calculate()
+        self._adjust_borders()
 
-        return json.dumps({'texts' : self.alltext,
+        return json.dumps({'text' : self.alltext,
                            'sections' : self.sections,
                            'pages' : self.pages}, ensure_ascii=False)
 
