@@ -185,7 +185,8 @@ class WikiParser:
                     continue
 
                 # add lines containing page info directly
-                if li.startswith(WikiParser._pagekw_input):
+                if li.strip().startswith(WikiParser._pagekw_input): #FIXME
+                    li = li.strip() #FIXME
                     pageinfo = li[len(WikiParser._pagekw_input):].strip()
 
                     if not WikiParser._page_pattern.match(pageinfo):
@@ -239,7 +240,7 @@ class WikiParser:
                           % (i, self.title), file=sys.stderr) 
                 
                 # normalise spaces and add line to output
-                aux.append(re.sub(r'[\t ]+', ' ', li))
+                aux.append(re.sub(r'[\t ]+', ' ', li)) #FIXME
 
                 # check there are no unbalanced punctuation pairs
                 for current in li:
@@ -319,7 +320,14 @@ class WikiParser:
         # group lines by titles
         gr_titles = [(k,list(g)) for k,g in it.groupby(lines, WikiParser._title_pattern.match)]
         
-        return [{'section': title,
+
+        output = [{'section': title,
                  'text'   : ' '.join(t if t else '\n' for t in util.striplines(txts))}
                  for title, txts in self._join_titletext(gr_titles)]
+
+        # add a space so that in offsethandler the last annotation is not missing a character
+        if output:
+            output[-1]['text'] += " "
+
+        return output
 

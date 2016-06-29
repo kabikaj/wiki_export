@@ -99,6 +99,65 @@ class OffsetsBuilder:
         self.sections = []
         self.pages = []
 
+#    def _calculate(self):
+#        """ Calculates the values of alltext, sections and pages.
+#
+#        Remove the PAGE$digitEGAP keywords from the texts and converts it
+#        into annotation offsets. Merges the modified texts into one block
+#        and saves it into alltexts. Converts also the section information
+#        into annotation offsets.
+#
+#        """
+#        pivot = 0  # abs index of first char of current chunk of text
+#        page_start_abs = -1 # abs index where current page starts
+#        current_page_info = None
+#        remove_gaps = 0
+#
+#        for chunk in self._data:
+#
+#            current = 0 # current char in chunk
+#            remove_gaps = 0
+#
+#            for m in re.finditer(r'%s *' % OffsetsBuilder._page_pattern, chunk['text']):
+#                
+#                page_info = m.group(1)
+#                pagekw_start, pagekw_end = m.span()
+#
+#                if page_start_abs != -1:
+#                    my_last_end = pivot + pagekw_start - remove_gaps - 1 # abs index
+#                    self.pages.append({
+#                        'name' : current_page_info,
+#                        'start' : page_start_abs,
+#                        'end' : my_last_end})
+#
+#                    remove_gaps += pagekw_end - pagekw_start
+#
+#                page_start_abs = pivot + pagekw_start #FIXME- remove_gaps # abs index
+#                current_page_info = page_info
+#
+#                self.alltext += chunk['text'][current:pagekw_start]
+#                current = pagekw_end
+#
+#            self.alltext += chunk['text'][current:]
+#
+#            if chunk['section']:
+#
+#                self.alltext += '\n' # add newline at the end of each section
+#                
+#                self.sections.append({
+#                    'name' : chunk['section'],
+#                    'start' : pivot,
+#                    'end' : len(self.alltext)-1})
+#
+#            pivot = len(self.alltext)
+#
+#        if page_start_abs != -1:
+#            self.pages.append({
+#                'name' : page_info,
+#                'start' : my_last_end + 1,
+#                'end' : pivot - 1})
+
+
     def _calculate(self):
         """ Calculates the values of alltext, sections and pages.
 
@@ -108,30 +167,35 @@ class OffsetsBuilder:
         into annotation offsets.
 
         """
-        pivot = 0  # absolute index of first char of current chunk of text
-        page_start_abs = -1
+        pivot = 0  # abs index of first char of current chunk of text
+        is_page_start = False
         current_page_info = None
         remove_gaps = 0
+        my_last_end = 0 # abs
 
         for chunk in self._data:
 
             current = 0 # current char in chunk
+            remove_gaps = 0
 
             for m in re.finditer(r'%s *' % OffsetsBuilder._page_pattern, chunk['text']):
                 
                 page_info = m.group(1)
                 pagekw_start, pagekw_end = m.span()
 
-                if page_start_abs != -1:
-                    my_last_end = pivot + pagekw_start - remove_gaps - 1
+                if is_page_start:
+                    current_end = pivot + pagekw_start - remove_gaps - 1 # abs index
                     self.pages.append({
                         'name' : current_page_info,
-                        'start' : page_start_abs,
-                        'end' : my_last_end})
+                        'start' : my_last_end,
+                        'end' : current_end})
 
-                    remove_gaps += pagekw_end - pagekw_start
+                    my_last_end = current_end
 
-                page_start_abs = pivot + pagekw_start
+                remove_gaps += pagekw_end - pagekw_start
+
+                is_page_start = True
+
                 current_page_info = page_info
 
                 self.alltext += chunk['text'][current:pagekw_start]
@@ -150,11 +214,12 @@ class OffsetsBuilder:
 
             pivot = len(self.alltext)
 
-        if page_start_abs != -1:
+        if is_page_start:
             self.pages.append({
                 'name' : page_info,
                 'start' : my_last_end + 1,
                 'end' : pivot - 1})
+
 
     def _adjust_borders(self):
         """ Move index borders that point to newlines to non-newline char.
@@ -166,11 +231,11 @@ class OffsetsBuilder:
 
             for entry in annotation:
 
-                while self.alltext[entry['start']] == '\n':
+                while self.alltext[entry['start']] in ('\n', ' '):
                     entry['start'] += 1
 
                 while self.alltext[entry['end']] == '\n':
-                    entry['end'] -= 1
+                    entry['end'] -= 1            
         
     
     def build(self):

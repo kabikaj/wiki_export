@@ -60,6 +60,8 @@ if __name__ == '__main__':
         print('Fatal error in ExportHandler: %s' % e, file=sys.stderr)
         sys.exit(1)
 
+    #print(data) #DEBUG
+
     for scan in json.loads(data):
 
         fname, fext = os.path.splitext(scan['title'])
