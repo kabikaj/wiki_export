@@ -197,7 +197,7 @@ class TSVConverter:
         
             # if ta marbuta (U+0629) in the middle
             # it has to be last character or one after last, if word include vowels of case
-            if len(token)>4:
+            if len(token) > 4:
                 if 'ة' in token[1:-3]:
                     print('Warning in section "%s" of scan %s: word "%s" may contain a typo (ta marbuta in the middle)'
                          % (section, self.title, token), file=sys.stderr)  

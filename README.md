@@ -1,6 +1,6 @@
-# Wiki to TSV converter
+# Wiki to json converter
 
-Package for exporting transcriptions from the COBHUNI wiki, parsing texts for errors, and converting to TSV format.
+Package for exporting transcriptions from the COBHUNI wiki, parsing texts for errors, and converting to json format.
 
 Main:
   - wiki_to_json.py (entry point)
