@@ -22,7 +22,7 @@ Auxiliary files:
 
 Alicia Gonález Martínez - https://gitlab.com/alrazi/wiki_export
 
-The COBHUNI Project - Universität Hamburg
+The COBHUNI Project - Universität Hamburg - http://www.cobhuni.uni-hamburg.de/
 
 ## Examples of usage
 
