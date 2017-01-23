@@ -1,6 +1,6 @@
 # Wiki to json converter
 
-Package for exporting transcriptions from wiki of the COBHUNI project, parsing texts for errors, and converting to json format.
+Python program for exporting OCRed and post-corrected texts from the COBHUNI wiki and converting them into json format.
 
 The file config.ini.exmaple in an example of how config.ini looks like without sensitive information.
 
