@@ -1,0 +1,94 @@
+#    Copyright (C) 2016  Alicia González Martínez, aliciagm85+code@gmail.com
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+######################################################################################
+
+[wiki api]
+  endpoint = http://www.wiki-xxx/api.php #NOTE path to the api for the wiki
+
+[wiki login]
+  action     = login
+  format     = json
+  lgname     = xxx  #NOTE username to access the wiki
+  lgpassword = xxx  #NOTE password to access the wiki
+
+[wiki query]
+  action        = query
+  titles        = Scans
+  prop          = revisions
+  rvprop        = content|user
+  format        = json
+  formatversion = 2
+  utf8          = 
+
+[unicode]
+  bom = 0xfeff           # byte order mark
+  double prime = 0x2033  # must be replaced by tanwin fatha; probably an error from the OCR
+  tanwin fatha = 0x64b
+  ltr = 0x200E           # unicode left-to-right mark
+  rtl = 0x200F           # unicode right-to-left mark
+  tatweel = 0x640        # tatweel or kashida
+
+[arabic vocalic diacritics]
+  tanwin fatha = 0x64b
+  tanwin damma = 0x64c
+  tanwin kasra = 0x64d
+  single fatha = 0x64e
+  single damma = 0x64f
+  single kasra = 0x650
+  sukun = 0x652
+
+[quotation marks]
+  # keep '«' (U+ab) and '»' (U+bb) untouched, and convert the rest to '"'
+  LEFT SINGLE QUOTATION MARK            = ‘  # U+2018 utf8: 0xE2 0x80 0x98
+  RIGHT SINGLE QUOTATION MARK           = ’  # U+2019 utf8: 0xE2 0x80 0x99
+  SINGLE LOW-9 QUOTATION MARK           = ‚  # U+201A utf8: 0xE2 0x80 0x9A
+  SINGLE HIGH-REVERSED-9 QUOTATION MARK = ‛  # U+201B utf8: 0xE2 0x80 0x9B
+  LEFT DOUBLE QUOTATION MARK            = “  # U+201C utf8: 0xE2 0x80 0x9C
+  RIGHT DOUBLE QUOTATION MARK           = ”  # U+201D utf8: 0xE2 0x80 0x9D
+  DOUBLE LOW-9 QUOTATION MARK           = „  # U+201E utf8: 0xE2 0x80 0x9E
+  DOUBLE HIGH-REVERSED-9 QUOTATION MARK = ‟  # U+201F utf8: 0xE2 0x80 0x9F
+
+[punctuation delimiters pairs]
+  0xab = 0xbb  # «»
+  0x28 = 0x29  # ()
+  0x5b = 0x5d  # []
+  0x7b = 0x7d  # {}
+
+[punctuation delimiters equal]
+  quote = "
+  paragraph = §
+
+[arabic words]
+  max length = 10
+
+[wiki format]
+  page keyword input = صفحة
+  title pattern = ==(.+)==
+  char to strip = =  # char to remove from title after having been matched  #FIXME remove ??
+
+[json format]
+  page allowed = (?:[1-9][0-9]*|[١-٩][٠-٩]*)[rv]?
+  opening page keyword output = PAGE
+  closing page keyword output = EGAP
+
+[webanno]
+  section layer name = section
+  section layer feature = section name
+  page layer name = page
+  page layer feature = page name
+
+[json output]
+  path = ../../data/prepared/
