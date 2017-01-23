@@ -20,7 +20,7 @@ Auxiliary files:
 
 ## Author
 
-Alicia Gonález Martínez
+Alicia Gonález Martínez - https://gitlab.com/alrazi/wiki_export
 
 The COBHUNI Project - Universität Hamburg
 
